@@ -1,0 +1,517 @@
+var exports = module.exports = {}
+const configs = require("../conf.d")
+, server = require("./../ussd")
+, lang = require("../conf.d/language.json")
+, moment = require('moment')
+, accountlogic = require("../controllers/account")
+, nonCardlogic = require("../controllers/nonCardTransfer")
+, serverConfig = configs.getServerConfig()
+, institution = configs.institution()
+, intel = configs.apiConfig()
+, ussd = server.init(serverConfig)
+, appServer =ussd.app
+, jsonCache =ussd.jsonCache
+, log =ussd.log
+, http =ussd.http
+
+exports.otherBank =async function(mobile,msg){
+	var menu= await jsonCache.get(mobile)
+	let local =menu.local
+	menu.state = 'otherBank'
+if (msg=== '*')  {
+			switch (menu.menu) {
+				case 'list':
+					menu.state = 'transfer'
+					menu.message =lang[local].threeTransferService+ lang[local].back
+					break
+				case 'bank1':
+					if(menu.permissions.length ===1){
+						menu.state ='transfer'
+						menu.message = lang[local].twoTransferService+ lang[local].back
+					}else {
+						menu.fromBank = institution.ahadu
+						menu.menu ='list'
+						let message =lang[local].sourceAccount
+						for (let index = 0; index < menu.permissions.length; index++) {
+							let AccountId = menu.permissions[index];
+							var number = index+1;
+							message += `${number}. ${AccountId}  \n`
+						}
+						message +=lang[local].back
+						menu.message = message
+					}
+					
+					break;
+				case 'bank2':
+					menu.menu ='bank1'
+					let text1 =lang[local].destinationBank;
+						text1 += `1. ${lang[local].cbe} `
+						text1 += `2. ${lang[local].awash} `
+						text1 += `3. ${lang[local].dashen}`
+						text1 += `4. ${lang[local].boa} `
+						text1 += `5. ${lang[local].wegagen}`
+						text1 += `${lang[local].more} \n`;
+						text1 += lang[local].back;
+					menu.message = text1
+					break;
+				case 'bank3':
+					menu.menu ='bank2'
+					let text2 =lang[local].destinationBank;
+						text2 += `1. ${lang[local].hibret}`
+						text2 += `2. ${lang[local].nib}`
+						text2 += `3. ${lang[local].coop}`
+						text2 += `4. ${lang[local].zemen}`
+						text2 += `5. ${lang[local].bunna}`
+						text2 += `${lang[local].more} \n`;
+						text2 += lang[local].back;
+					menu.message = text2
+				break;
+				case 'bank4':
+                                        menu.menu ='bank3'
+                                        let text3 =lang[local].destinationBank;
+                                                text3 += `1. ${lang[local].berhan}`
+                                                text3 += `2. ${lang[local].abay}`
+                                                text3 += `3. ${lang[local].Enat}`
+                                                text3 += `4. ${lang[local].smfi}`
+                                                text3 += `5. ${lang[local].rmfi}`
+                                                text3 += `${lang[local].more} \n`;
+                                                text3 += lang[local].back;
+                                        menu.message = text3
+                                break;
+				   case 'bank5':
+                                        menu.menu ='bank4'
+                                        let text4 =lang[local].destinationBank;
+                                                text4 += `1. ${lang[local].amhara}`
+                                                text4 += `2. ${lang[local].siinqee}`
+                                                text4 += `3. ${lang[local].lion}`
+                                                text4 += `4. ${lang[local].zamzam}`
+                                                text4 += `5. ${lang[local].goh}`
+                                                text4 += `${lang[local].more} \n`;
+                                                text4 += lang[local].back;
+                                        menu.message = text4
+                                break;
+				case 'destination':
+					if(menu.page ===1){
+						menu.menu ='bank1'
+						let message =lang[local].destinationBank;
+							message += `1. ${lang[local].cbe}`
+							message += `2. ${lang[local].awash}`
+							message += `3. ${lang[local].dashen}`
+							message += `4. ${lang[local].boa}`
+							message += `5. ${lang[local].wegagen}`
+							message += `${lang[local].more} \n`;
+							message += lang[local].back;
+						menu.message = message
+					}else if(menu.page ===2){
+						menu.menu ='bank2'
+						let message =lang[local].destinationBank;
+							message += `1. ${lang[local].hibret}`
+							message += `2. ${lang[local].nib}`
+							message += `3. ${lang[local].coop}`
+							message += `4. ${lang[local].zemen}`
+							message += `5. ${lang[local].bunna}`
+							message += `${lang[local].more}\n`;
+							message += lang[local].back;
+						menu.message = message
+					}else if(menu.page === 3){
+						menu.menu ='bank3'
+						let message =lang[local].destinationBank;
+							message += `1. ${lang[local].berhan}`
+							message += `2. ${lang[local].abay}`
+							message += `3. ${lang[local].Enat}`
+							message += `4. ${lang[local].smfi}`
+							message += `5. ${lang[local].rmfi}`
+  							message += `${lang[local].more}\n`;
+							message += lang[local].back;
+						menu.message = message
+					}else if(menu.page === 4){
+                                                menu.menu ='bank4'
+                                                let message =lang[local].destinationBank;
+                                                        message += `1. ${lang[local].amhara}`
+                                                        message += `2. ${lang[local].siinqee}`
+                                                        message += `3. ${lang[local].lion}`
+                                                        message += `4. ${lang[local].zamzam}`
+                                                        message += `5. ${lang[local].goh}`
+                                                        message += `${lang[local].more}\n`;
+                                                        message += lang[local].back;
+                                                menu.message = message
+                                        }else if(menu.page === 5){
+                                                menu.menu ='bank5'
+                                                let message =lang[local].destinationBank;
+                                                        message += `1. ${lang[local].tsehay}`
+                                                        message += `2. ${lang[local].hijra}`
+                                                        message += `3. ${lang[local].cbeBirr}`
+                                                        message += `4. ${lang[local].kmfi}`
+                                                        message += `5. ${lang[local].onefi}`
+                                                        message += lang[local].back;
+                                                menu.message = message
+                                        }
+					
+				break;
+				case 'name':
+					menu.menu = 'destination'
+					menu.message =menu.bank + lang[local].destinationAccount + lang[local].back;
+				break;
+				case 'amount':
+					menu.menu = 'destination'
+					menu.message =menu.bank + lang[local].destinationAccount + lang[local].back;
+				break;
+				case 'confrim':
+					menu.menu ='amount'
+					menu.message =` ${lang[local].request}  ${lang[local].from} : ${menu.fromAccount}   \n  ${lang[local].to}   ${menu.isReset}- ${menu.index} \n` +lang[local].amount +lang[local].back;
+				break;
+			}
+}else if(msg === '9'){
+	menu.state = 'service'
+	menu.message =lang[local].service;
+}else {
+	menu.state = 'otherBank'
+	switch (menu.menu) {
+		case 'list':
+				if(msg > 0 && msg <= menu.permissions.length) {
+					menu.menu = 'bank1'
+					menu.page = 1
+					let number = msg -1
+					menu.fromAccount = menu.permissions[number]
+					let balance =await accountlogic.accountDetails(mobile,menu.fromAccount)
+					if(balance.data){
+						menu.balance =balance.data.AvailableBalance
+						menu.menu ='bank1'
+						let message =lang[local].destinationBank;
+							message += `1. ${lang[local].cbe} `
+							message += `2. ${lang[local].awash} `
+							message += `3. ${lang[local].dashen}`
+							message += `4. ${lang[local].boa} `
+							message += `5. ${lang[local].wegagen}`
+							message += `${lang[local].more}\n`;
+							message += lang[local].back;
+						menu.message = message
+					}else {
+						menu.action = 'end'
+						menu.message =lang[local].systemError 
+					}				
+				}else {
+					let message =lang[local].retry + lang[local].continue 
+					for (let index = 0; index < menu.permissions.length; index++) {
+						let AccountId = menu.permissions[index];
+						let number = index+1;
+						message += `${number}. ${AccountId} \n`
+					}
+					message +=lang[local].back 
+					menu.menu ='list';
+					menu.message = message
+			    }	
+		   break;
+		case 'bank1':
+			if(msg ==='1'){
+				menu.menu = 'destination'
+				menu.toBank = institution.cbe
+				menu.bank = lang[local].cbe
+				menu.message =lang[local].cbe + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='2'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.awash
+				menu.bank = lang[local].awash
+				menu.message =lang[local].awash + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='3'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.dashen
+				menu.bank = lang[local].dashen
+				menu.message =lang[local].dashen + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='4'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.boa
+				menu.bank = lang[local].boa
+				menu.message =lang[local].boa + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='5'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.wegagen
+				menu.bank = lang[local].wegagen
+				menu.message =lang[local].wegagen + lang[local].destinationAccount + lang[local].back;
+			}else if(msg === '6'){
+				menu.page =2
+				menu.menu ='bank2'
+				let message =lang[local].destinationBank;
+					message += `1. ${lang[local].hibret}`
+					message +=`2. ${lang[local].nib}`
+					message +=`3. ${lang[local].coop}`
+				    message += `4. ${lang[local].zemen}`
+					message += `5. ${lang[local].bunna}`
+					message += `${lang[local].more}\n`;
+					message += lang[local].back;
+					menu.message = message
+			}else {
+						let message =lang[local].destinationBank;
+						message += `1. ${lang[local].cbe}`
+						message += `2. ${lang[local].awash}`
+						message += `3. ${lang[local].dashen}`
+						message += `4. ${lang[local].boa}`
+						message += `5. ${lang[local].wegagen}`
+						message += `${lang[local].more} \n`;
+						message += lang[local].back;
+				menu.message =   message
+			}
+			break;
+		case 'bank2':
+			if(msg ==='1'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.hibret
+				menu.bank = lang[local].hibret
+				menu.message =lang[local].hibret + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='2'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.nib
+				menu.bank = lang[local].nib
+				menu.message =lang[local].nib + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='3'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.coop
+				menu.bank = lang[local].coop
+				menu.message =lang[local].coop + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='4'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.zemen
+				menu.bank = lang[local].zemen
+				menu.message =lang[local].zemen + lang[local].destinationAccount + lang[local].back;
+			}else if(msg ==='5'){
+				menu.menu = 'destination'
+				menu.toBank  = institution.bunna
+				menu.bank = lang[local].bunna
+				menu.message =lang[local].bunna + lang[local].destinationAccount + lang[local].back;
+			}else if(msg === '6'){
+					menu.page =3
+					menu.menu ='bank3'
+					let message =lang[local].destinationBank;
+						message += `1. ${lang[local].berhan}`
+						message += `2. ${lang[local].abay}`
+						message += `3. ${lang[local].Enat}`
+						message += `4. ${lang[local].smfi}`
+						message += `5. ${lang[local].rmfi} `
+						message += `${lang[local].more}\n`;
+						message += lang[local].back;
+						menu.message = message
+			}else {
+					let message =lang[local].destinationBank;
+						message += `1. ${lang[local].hibret}`
+						message += `2. ${lang[local].nib}`
+						message += `3. ${lang[local].coop}`
+						message += `4. ${lang[local].zemen}`
+						message += `5. ${lang[local].bunna}`
+						message += `${lang[local].more} \n`;
+						message += lang[local].back;
+				menu.message =  message
+			}
+				break;
+			case 'bank3':
+				if(msg ==='1'){
+					menu.menu = 'destination'
+					menu.toBank  = institution.berhan
+					menu.bank = lang[local].berhan
+					menu.message =lang[local].berhan + lang[local].destinationAccount + lang[local].back;
+				}else if(msg ==='2'){
+					menu.menu = 'destination'
+					menu.toBank  = institution.abay
+					menu.bank = lang[local].abay
+					menu.message =lang[local].abay + lang[local].destinationAccount + lang[local].back;
+				}else if(msg ==='3'){
+					menu.menu = 'destination'
+					menu.toBank  = institution.Enat
+					menu.bank = lang[local].Enat
+					menu.message =lang[local].Enat + lang[local].destinationAccount + lang[local].back;
+				}else if(msg ==='4'){
+					menu.menu = 'destination'
+					menu.toBank  = institution.smfi
+					menu.bank = lang[local].smfi
+					menu.message =lang[local].smfi + lang[local].destinationAccount + lang[local].back;
+				}else if(msg ==='5'){
+					menu.menu = 'destination'
+					menu.toBank  = institution.rmfi
+					menu.bank = lang[local].rmfi
+					menu.message =lang[local].rmfi + lang[local].destinationAccount + lang[local].back;
+				}else if(msg === '6'){
+                                        menu.page =4
+                                        menu.menu ='bank4'
+                                        let message =lang[local].destinationBank;
+                                                message += `1. ${lang[local].amhara}`
+                                                message += `2. ${lang[local].siinqee}`
+                                                message += `3. ${lang[local].lion}`
+                                                message += `4. ${lang[local].zamzam}`
+                                                message += `5. ${lang[local].goh} `
+						message += `${lang[local].more}\n`
+                                                message += lang[local].back;
+                                                menu.message = message
+                                }else {
+					let message =lang[local].destinationBank;
+						message += `1. ${lang[local].berhan}`
+						message += `2. ${lang[local].abay}`
+						message += `3. ${lang[local].Enat}`
+						message += `4. ${lang[local].smfi}`
+						message += `5. ${lang[local].rmfi} `
+						message += lang[local].back;
+						menu.message =  message
+				}
+			break;
+		   case 'bank4':
+                                if(msg ==='1'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.amhara
+                                        menu.bank = lang[local].amhara
+                                        menu.message =lang[local].amhara + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='2'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.siinqee
+                                        menu.bank = lang[local].siinqee
+                                        menu.message =lang[local].siinqee + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='3'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.lion
+                                        menu.bank = lang[local].lion
+                                        menu.message =lang[local].lion + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='4'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.zamzam
+                                        menu.bank = lang[local].zamzam
+                                        menu.message =lang[local].zamzam + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='5'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.goh
+                                        menu.bank = lang[local].goh
+                                        menu.message =lang[local].goh + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg === '6'){
+                                        menu.page =5
+                                        menu.menu ='bank5'
+                                        let message =lang[local].destinationBank;
+                                                message += `1. ${lang[local].tsehay}`
+                                                message += `2. ${lang[local].hijra}`
+                                                message += `3. ${lang[local].cbeBirr}`
+                                                message += `4. ${lang[local].kmfi}`
+                                                message += `5. ${lang[local].onefi} `
+                                                message += lang[local].back;
+                                                menu.message = message
+                                }else {
+                                        let message =lang[local].destinationBank;
+                                                message += `1. ${lang[local].amhara}`
+                                                message += `2. ${lang[local].siinqee}`
+                                                message += `3. ${lang[local].lion}`
+                                                message += `4. ${lang[local].zamzam}`
+                                                message += `5. ${lang[local].goh} `
+                                                message += lang[local].back;
+                                                menu.message =  message
+                                }
+                        break;
+	        case 'bank5':
+                                if(msg ==='1'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.tsehay
+                                        menu.bank = lang[local].tsehay
+                                        menu.message =lang[local].tsehay + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='2'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.hijra
+                                        menu.bank = lang[local].hijra
+                                        menu.message =lang[local].hijra + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='3'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.cbeBirr
+                                        menu.bank = lang[local].cbeBirr
+                                        menu.message =lang[local].cbeBirr + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='4'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.kmfi
+                                        menu.bank = lang[local].kmfi
+                                        menu.message =lang[local].kmfi + lang[local].destinationAccount + lang[local].back;
+                                }else if(msg ==='5'){
+                                        menu.menu = 'destination'
+                                        menu.toBank  = institution.onefi
+                                        menu.bank = lang[local].onefi
+                                        menu.message =lang[local].onefi + lang[local].destinationAccount + lang[local].back;
+                                }else {
+                                        let message =lang[local].destinationBank;
+                                                message += `1. ${lang[local].tsehay}`
+                                                message += `2. ${lang[local].hijra}`
+                                                message += `3. ${lang[local].cbeBirr}`
+                                                message += `4. ${lang[local].kmfi}`
+                                                message += `5. ${lang[local].onefi} `
+                                                message += lang[local].back;
+                                                menu.message =  message
+                                }
+                        break;
+		case 'destination':
+			let channel = "USSD";
+			menu.toAccount = msg
+			let nameEnquirty =await nonCardlogic.nonCardEnquiry(mobile,menu.fromAccount,menu.toAccount,menu.fromBank,menu.toBank,channel)
+			log.info(nameEnquirty);
+			if(nameEnquirty.errorCode ==='0'){
+				menu.menu ='name'
+				menu.isReset = nameEnquirty.data.beneficiaryName
+				menu.cust
+				menu.index = menu.toAccount.slice(-4);
+				menu.message = lang[local].otherBank + lang[local].selectDestination + `1. ${nameEnquirty.data.beneficiaryName}`
+			}else {
+				menu.message =lang[local].retry +`${menu.bank}` + lang[local].destinationAccount + lang[local].back;
+				
+			}
+
+			break;
+		case 'name': 
+			if(msg === '1'){
+				menu.menu ='amount'
+				menu.message =`${menu.bank }` +` ${lang[local].request}  ${lang[local].from} : ${menu.fromAccount}   \n  ${lang[local].to}   ${menu.isReset}- ${menu.index} \n` +lang[local].amount +lang[local].back;
+			}else {
+				menu.message = lang[local].retry + lang[local].selectDestination + `1. ${menu.isReset}`
+			}
+		  break
+		case 'amount':
+			if(/^\d*\.?\d+$/.test(msg) && Number(msg) < Number(menu.balance) && msg != '0'){
+				var toAccount = menu.toAccount
+				menu.index = toAccount.slice(-4);
+				if(Number.isInteger(Number(msg))){
+					menu.amount = msg+'.00'
+				}else {
+					menu.amount = msg
+				}
+				menu.menu ='confrim'
+				menu.message =` ${lang[local].request}  ${menu.amount} ${lang[local].etb} \n  ${lang[local].from} : ${menu.fromAccount}   \n  ${lang[local].to} : ${menu.isReset}- ${menu.index} \n` +lang[local].confirm ;
+			}else if(/^\d*\.?\d+$/.test(msg) && Number(msg) > Number(menu.balance)){
+				menu.message =lang[local].Insufficient + ` ${menu.bank }` +` ${lang[local].request}  ${lang[local].from} : ${menu.fromAccount} \n  ${lang[local].to} : ${menu.isReset}- ${menu.index} \n` +lang[local].amount +lang[local].back;
+			}else {
+				menu.message =lang[local].retry + `${menu.bank }` +` ${lang[local].request}  ${lang[local].from} : ${menu.fromAccount}   \n  ${lang[local].to}  : ${menu.isReset}- ${menu.index} \n` +lang[local].amount +lang[local].back;
+			}
+				break;		
+		case 'confrim':
+					if(msg === '1' && menu.fromAccount && menu.toAccount  && menu.fromBank && menu.toBank ){
+						let transferResponse =await nonCardlogic.nonCardTransfer(mobile,menu.fromAccount,menu.toAccount,menu.amount,menu.fromBank,menu.toBank)
+						log.info(transferResponse);
+						var toAccount = menu.toAccount
+						menu.idex = toAccount.slice(-4);
+						menu.remark = msg
+						menu.menu ='done'
+
+						if(transferResponse.errorCode === '1'){
+							log.info(transferResponse);
+							menu.action = "end"
+							 let date = moment().format("YYYY-MM-DD HH:mm");
+							menu.message =` ${lang[local].complete} ${lang[local].etb} ${menu.amount} ${lang[local].debited} ${lang[local].from} ${menu.fromAccount}\n ${lang[local].to} ${menu.isReset}\n ${lang[local].reference}  ${transferResponse.data.refnum} \n${lang[local].date} ${date} ${lang[local].bankingWtihUs}`;
+						}else {
+							menu.action ='end'
+							menu.message =lang[local].transferFailed
+
+						}
+					}else if(Number(msg) === 0){
+						menu.action ='end'
+									menu.message =lang[local].cancel
+					}else {
+						menu.menu ='confrim'
+					    menu.message =` ${lang[local].request} ${menu.amount} ${lang[local].etb} \n  ${lang[local].from} : ${menu.fromAccount}   \n  ${lang[local].to} :  ${menu.isReset}- ${menu.index} \n` +lang[local].confirm ;
+				
+					}
+				
+			break;	
+		default:
+			break;
+	}
+}
+
+  return  menu
+}
+

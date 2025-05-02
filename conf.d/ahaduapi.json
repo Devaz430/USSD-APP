@@ -1,0 +1,23 @@
+{
+  "conf": {
+    "apiUrl": "http://localhost:2000",
+    "password": "rootpass",
+    "database": "dashen",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "app": {
+    "port": "3000"
+  },
+  "path": {
+    "viewAccountByPhone": "/olive/publisher/viewAcntsByPhone",
+    "smtpOptions": {
+        "host": "smtppro.zoho.com",
+        "port": 587,
+        "auth": {
+            "user": "onedesk@onetap.et",
+            "pass": "Th!$B@(end@(9e$4"
+        }
+    }
+  }
+}

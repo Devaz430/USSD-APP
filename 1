@@ -1,0 +1,91 @@
+var exports = module.exports = {}
+const configs = require("../conf.d")
+,  moment = require('moment') 
+, axios = require('axios')
+, intel = configs.apiConfig()
+, JSONCache =require("redis-json")
+, Redis = require("ioredis")
+, redis = new Redis({
+	host: "localhost",
+	port: 6379,
+	connnectTimeout: 20000
+  })
+, jsonCache = new JSONCache(redis)
+
+
+
+exports.telebirr =async function(mobile,msg){
+	var session= await jsonCache.get(mobile)
+	 if(!session.amount) {
+                        if(/^\d*\.?\d+$/.test(msg)){
+                                 session.amount = msg
+                                 session.state = 'telebirr'
+                                 var message =`Transfer to own telebirr wallet: \n amount : ${session.amount} Birr \n from : ${session.fromAccount} \n to : ${mobile} \n  Please enter remark:`;          
+                        }else {
+                                session.state = 'telebirr'
+                                var message =` Invalid Input, Try Again \n Transfer to own telebirr wallet:  \n from ${session.fromAccount} \n to ${mobile} \n Please enter  Amount:`;
+                        }
+
+
+        }else if(!session.remark){
+		 session.remark = msg;
+		session.toAccount = mobile
+		session.state = 'telebirr'
+		var text =`Transfer to own telebirr wallet:  \n request transfer ${session.amount} Birr \n   from ${session.fromAccount} to  ${mobile} \n  Please enter remark to procced:`;
+		var message = text
+	}else if(session.remark){
+                         session.state = 'telebirr'
+                 if(Number(msg) === 1){
+                id = (new Date()).getTime().toString(36) + Math.random().toString(36).slice(10)
+                var transferData = {
+                        "RequestId":"USSD"+id,
+                        "TransactionAmount":session.amount,
+                        "TransferCurrency":"ETB",
+                        "DebtorAccount": session.fromAccount,
+                        "CreditorAccount":session.toAccount,
+                        "CreditorAccountCurrency":"ETB",
+                        "DebtorAccountCurrency":"ETB",
+                        "TransactionDescription": session.remark
+                        }
+                        console.log(transferData);
+                        var transferResponse =await axios.post(intel.fundTransfer,transferData)
+                        .then(function (response) {
+                          if(response){
+                                // console.log(response);
+                                return response;
+                          }else {
+                                return null
+                          }
+
+                        })
+                        .catch(function (error) {
+                          console.log(error);
+                          return false
+                        });
+
+
+                        var toAccount = session.toAccount
+                         session.remark = msg
+                         session.menu ='confrim'
+
+                         if(transferResponse && Number(transferResponse.data.responseCode) === 0){
+                                session.action = "end"
+                                var message =` Your Transaction is successful. \n Thank you for banking with us!! \n Ahadu Bank`;
+                         }else if(transferResponse && Number(transferResponse.data.responseCode) === 1){
+                                session.message =transferResponse.data.responseMessage;
+                         }else {
+                                session.action ='end'
+                                var message =` Transaction failed. \n  Please contract the nearest  \n Ahadu Branch Office. \n`;
+
+                         }
+                }else if(Number(msg) === 0){
+                        session.action ='end'
+                        var message =` Operation aboart. \n Thank you for banking with us!! \n Ahadu Bank`;
+                }else {
+                          session.menu ='confrim'
+                          var message =`request transfer ${session.amount} Birr \n from :${session.fromAccount} \n to : ${mobile} \n remark : ${session.remark} \n Please Confirm to procced:  \n1. Confirm \n0. Cancel`;
+
+                }
+        }
+	return {id: mobile,prestate : session.state,state : session.state ,message : message,fromAccount : session.fromAccount,amount:session.amount,menu:null,toAccount : session.toAccount,remark : session.remark,confirm: null,action:session.action,pin : null,newPin : null,confirmPin : null,index: null,active : null,isReset: null}
+}

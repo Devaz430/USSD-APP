@@ -1,0 +1,8 @@
+{
+"apps" : [{
+"script" : "index.js",
+"watch" : true,
+"max_memory_restart" : "50M",
+"error_file" : "/dev/null"
+}]
+}

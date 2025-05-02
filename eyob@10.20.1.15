@@ -1,0 +1,274 @@
+"use strict";
+const configs = require("./conf.d"),
+  server = require("./ussd"),
+  servicemenu = require("./menu/service"),
+  accountmenu = require("./menu/account"),
+  model = require("./models/customer"),
+  transfermenu = require("./menu/transfer"),
+  ownmenu = require("./menu/owntransfer"),
+  ahadumenu = require("./menu/ahadu"),
+  otherBankmenu = require("./menu/otherBank"),
+  telebirrmenu = require("./menu/telebirr"),
+  balancemenu = require("./menu/balance"),
+  miniemenu = require("./menu/mini"),
+  homemenu = require("./menu/dashboard"),
+  eairtimemenu = require("./menu/eairtime"),
+  sairtimemenu = require("./menu/sairtime"),
+  registermenu = require("./menu/register"),
+  signupmenu = require("./menu/signup"),
+  homeservice = require("./menu/homeservice"),
+  resetmenu = require("./menu/resetpin"),
+  pinmenu = require("./menu/changePin"),
+  paymentmenu = require("./menu/payment"),
+  loginmenu = require("./menu/login"),
+  settingmenu = require("./menu/accountSettings"),
+  airTicketMenu = require("./menu/airTicket"),
+  mpinlogic = require("./controllers/mpin"),
+  serverConfig = configs.getServerConfig(),
+  intel = configs.apiConfig(),
+  url = require("url"),
+  querystring = require("querystring"),
+  Logger = require("bunyan"),
+  ussd = server.init(serverConfig),
+  appServer = ussd.app,
+  jsonCache = ussd.jsonCache,
+  log = ussd.log,
+  http = ussd.http,
+  xmlparser = require("express-xml-bodyparser");
+
+appServer.use(xmlparser());
+
+let sequenceNumber = 0; // Global sequence number counter
+
+function generateSequenceNumber() {
+  sequenceNumber = (sequenceNumber + 1) % 0xffffffff;
+  return sequenceNumber;
+}
+
+function getCurrentTimestamp() {
+  const date = new Date();
+  return date.toISOString().slice(0, 19).replace("T", " ").replace(/-/g, "/");
+}
+
+appServer.get("/", async (req, res) => {
+  res.send("USSD APP working");
+  console.log("✅ USSD APP is running...");
+});
+
+appServer.post("/", async (req, res) => {
+  try {
+    console.log(
+      "📩 Raw USSD Request Received:",
+      JSON.stringify(req.body, null, 2)
+    );
+
+    const requestBody = req.body;
+
+    // Check if the expected keys exist in the request
+    if (!requestBody || !requestBody["cps-message"]) {
+      console.error("❌ ERROR: Missing `cps-message` in request body");
+      return res
+        .status(400)
+        .send("<error>Invalid USSD request format.</error>");
+    }
+    const cpsMessage = requestBody["cps-message"];
+    const transactionID = cpsMessage.sequence_number?.[0] || "";
+    const version = cpsMessage.version?.[0] || "";
+    let msg = cpsMessage.msg_content?.[0] || ""; // USSD message content
+    const from = cpsMessage.source_addr?.[0] || ""; // Customer's MSISDN (phone number)
+    const ussdCode = cpsMessage.dest_addr?.[0] || ""; // USSD Code
+    const mscGTAddress = cpsMessage.msc_gt_addr?.[0] || "";
+
+    console.log(`🛑 Transaction ID: ${transactionID}`);
+    // console.log(`📅 Transaction Time: ${transactionTime}`);
+    console.log(`📨 Received Message: ${msg}`);
+    console.log(`📱 From MSISDN: ${from}`);
+
+    let serviceType = cpsMessage.service_type?.[0] || "BR";
+    if (msg === "continue") {
+      serviceType = "CR"; // Continue session
+    } else if (msg === "end") {
+      serviceType = "EA"; // End session
+    } else if (msg === "abort") {
+      serviceType = "AR"; // Abort session
+    } else {
+      serviceType = "BR"; // Default to Begin Request
+    }
+    let session;
+    var sessions = {
+      local: "en",
+      id: from,
+      page: null,
+      fromAccount: null,
+      bank: null,
+      amount: null,
+      toAccount: null,
+      remark: null,
+      confrim: null,
+      menu: null,
+      prestate: "dashboard",
+      state: "dashboard",
+      pin: null,
+      newPin: null,
+      confirmPin: null,
+      active: null,
+      index: null,
+      isReset: null,
+      step: null,
+      balance: null,
+      msg: msg,
+      action: "request",
+      message: null,
+      accounts: null,
+      permissions: null,
+    };
+    console.log("msg::", msg);
+    if (msg === "*8056#") {
+      msg = "continue";
+      jsonCache.del(from);
+      await jsonCache.set(from, sessions);
+      session = await jsonCache.get(from);
+    } else {
+      session = await jsonCache.get(from);
+    }
+    let response = {
+      action: "end",
+      message: "Unexpected error occurred. Please try again later.",
+    };
+
+    if (session?.state) {
+      console.log(`📌 Current Session State: ${session.state}`);
+      switch (session.state) {
+        case "dashboard":
+          response = await homemenu.dashboard(from, msg);
+          break;
+        case "register":
+          response = await registermenu.register(from, msg);
+          break;
+        case "signup":
+          response = await signupmenu.signup(from, msg);
+          break;
+        case "payment":
+          response = await paymentmenu.payment(from, msg);
+          break;
+        case "login":
+          response = await loginmenu.login(from, msg);
+          break;
+        case "changePin":
+          response = await pinmenu.changePin(from, msg);
+          break;
+        case "accountListForSaving":
+          response = await accountmenu.balanceaccount(from, msg);
+          break;
+        case "accountListForMiniStatement":
+          response = await accountmenu.miniaccount(from, msg);
+          break;
+        case "OwnAccount":
+          response = await accountmenu.ownaccount(from, msg);
+          break;
+        case "otherBank":
+          response = await otherBankmenu.otherBank(from, msg);
+          break;
+        case "fundTransferToOtherBank":
+          response = await accountmenu.otherBankaccount(from, msg);
+          break;
+        case "fundTransferToAhaduAccount":
+          response = await accountmenu.ahaduaccount(from, msg);
+          break;
+        case "fundTransferToTeleBirr":
+          response = await accountmenu.telebirraccount(from, msg);
+          break;
+        case "airvendor":
+          response = await accountmenu.airtimeVendor(from, msg);
+          break;
+        case "sairtime":
+          response = await sairtimemenu.sairtime(from, msg);
+          break;
+        case "eairtime":
+          response = await eairtimemenu.eairtime(from, msg);
+          break;
+        case "mini":
+          response = await miniemenu.miniStatement(from, msg);
+          break;
+        case "home":
+          response = await homeservice.homeservice(from, msg);
+          break;
+        case "reset":
+          response = await resetmenu.resetmpin(from, msg);
+          break;
+        case "service":
+          response = await servicemenu.services(from, msg);
+          break;
+        case "saving":
+          response = await balancemenu.saving(from, msg);
+          break;
+        case "accountSessing":
+          response = await settingmenu.Settings(from, msg);
+          break;
+        case "transfer":
+          response = await transfermenu.transfer(from, msg);
+          break;
+        case "own":
+          response = await ownmenu.own(from, msg);
+          break;
+        case "ahadu":
+          response = await ahadumenu.ahadu(from, msg);
+          break;
+        case "telebirr":
+          response = await telebirrmenu.telebirr(from, msg);
+          break;
+        case "airTicket":
+          response = await airTicketMenu.airTicket(from, msg);
+          break;
+        case "owntransfer":
+          response = await ownmenu.owntransfer(from, msg);
+          break;
+
+        default:
+          response = {
+            action: "end",
+            message: "System error. Please try again later.",
+          };
+      }
+    }
+    jsonCache.del(from);
+    await jsonCache.set(from, response);
+
+    let action = response.action === "end" ? "end" : "request";
+    const sequenceNum = generateSequenceNumber();
+    const dataCoding = cpsMessage.data_coding?.[0] || "0";
+    // const msgLen = response.message.length;
+    const msgLen = 0;
+    const shortcode = "8056";
+    const USSD_USERNAME = null;
+    const USSD_PASSWORD_HASH = null;
+
+    const responseXML = `<?xml version="1.0" encoding="UTF-8"?>
+    <cps-message>
+      <sequence_number>${sequenceNum}</sequence_number>
+      <version>${version}</version>
+      <username>${USSD_USERNAME}</username>
+      <password>${USSD_PASSWORD_HASH}</password>
+      <service_type>${serviceType}</service_type>
+      <source_addr>${shortcode}</source_addr>
+      <dest_addr>${from}</dest_addr>
+      <timestamp>${getCurrentTimestamp()}</timestamp>
+      <command_status>0</command_status>
+      <data_coding>${dataCoding}</data_coding>
+      <msg_len>${msgLen}</msg_len>
+      <msg_content>${response.message}</msg_content>
+      <msc_gt_addr>${mscGTAddress}</msc_gt_addr>
+    </cps-message>`;
+
+    console.log("📤 Sending USSD Response:", responseXML);
+    res.setHeader("Content-Type", "application/xml; charset=UTF-8");
+    res.status(200).send(responseXML);
+  } catch (error) {
+    console.error("❌ USSD Processing Error:", error);
+    res.status(500).send("<error>System Error. Please try again.</error>");
+  }
+});
+
+appServer.listen(process.env.PORT || serverConfig.port, () => {
+  console.log(`🚀 Server running at port: ${serverConfig.port}`);
+});

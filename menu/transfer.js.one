@@ -1,0 +1,81 @@
+var exports = module.exports = {}
+const configs = require("../conf.d")
+, server = require("./../ussd")
+, lang = require("../conf.d/language.json")
+, accountlogic = require("../controllers/account")
+, institution = configs.institution()
+, serverConfig = configs.getServerConfig()
+, intel = configs.apiConfig()
+, ussd = server.init(serverConfig)
+, appServer =ussd.app
+, jsonCache =ussd.jsonCache
+, log =ussd.log
+, http =ussd.http
+
+
+exports.transfer= async function(mobile,msg){
+	var menu= await jsonCache.get(mobile)
+	let local =menu.local
+	if(msg === '*'){
+		menu.state = 'service'
+		menu.prestate = 'service'
+		menu.message =lang[local].service;
+
+	}else if(msg === '9'){
+		menu.state = 'service'
+		menu.prestate = 'service'
+		menu.message =lang[local].service;
+
+	}
+	if(menu.permissions.length === 0){
+		menu.action ='end'
+		menu.message =lang[local].notAllowed  
+	}else if(menu.permissions.length ===1){
+		menu.prestate = 'transfer'
+		if(msg === '1'){
+			menu.state = 'ahadu'
+			menu.menu = 'source'
+			menu.fromAccount= menu.permissions[0]
+			let accountDetail =await accountlogic.accountDetails(mobile,menu.fromAccount)
+			if(accountDetail.data){
+				menu.balance =accountDetail.data.AvailableBalance
+				menu.message =lang[local].withInBank + lang[local].destinationAccount  
+			}else {
+				menu.message =lang[local].systemError  
+			}
+		}else {
+			menu.message =lang[local].retry + lang[local].twoTransferService+ lang[local].back
+		}
+
+	}else if(menu.permissions.length >1){
+		menu.prestate = 'transfer'
+		if(msg  === '1'){
+			menu.state = 'own'
+			menu.menu ='list'
+			menu.step ='list'
+			let message = lang[local].sourceAccount
+			for (let index = 0; index < menu.permissions.length; index++) {
+				let AccountId = menu.permissions[index];
+				var number = index+1;
+				message += `${number}. ${AccountId}  \n`
+			}
+			message +=lang[local].back
+			menu.message = message
+		}else if(msg === '2'){
+			menu.state = 'ahadu'
+			menu.menu ='list'
+			let message = lang[local].continue
+			for (let index = 0; index < menu.permissions.length; index++) {
+				let AccountId = menu.permissions[index];
+				var number = index+1;
+				message += `${number}. ${AccountId}  \n`
+			}
+			message +=lang[local].back
+			menu.message = message
+		}else {
+			menu.message =lang[local].retry + lang[local].threeTransferService+ lang[local].back
+		}
+	}
+	
+	return menu;
+} 

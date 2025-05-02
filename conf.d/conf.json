@@ -1,0 +1,12 @@
+{
+  "db": {
+    "username": "root",
+    "password": "rootpass",
+    "database": "onesmss",
+    "host": "172.20.1.115",
+    "dialect": "mysql"
+  },
+  "app": {
+    "port": "5000"
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "database": {
+    "host": "localhost",
+    "user": "root",
+    "password": "rootpass",
+    "connectionLimit": 100000,
+    "database": "onesms",
+    "debug": false
+  },
+  "server": {
+    "port": 8081,
+    "pageSize": 100,
+    "logger": {
+      "format": "tiny"
+    }
+  },
+  "getParamters": {
+    "ticketPrice": 400,
+    "UtilityTypecd": "MKUTD"
+  },
+  "institution": {
+    "ahadu": "231431",
+    "cbe": "231402",
+    "awash": "231404",
+    "dashen": "231405",
+    "boa": "231406",
+    "wegagen": "231407",
+    "hibret": "231408",
+    "nib": "231409",
+    "coop": "231410",
+    "zemen": "231412",
+    "bunna": "231414",
+    "berhan": "231415",
+    "abay": "231416",
+    "Enat": "231419",
+    "smfi": "231421",
+    "rmfi": "231426",
+    "kmfi": "231438",
+    "cbeBirr": "231439",
+    "onemfi": "231441",
+    "amhara": "231448",
+    "tsehay": "231432",
+    "siinqee": "231430",
+    "lion": "231443",
+    "zamzam": "231428",
+    "hijra": "231427",
+    "goh": "231444"
+  },
+  "api": {
+    "accDetail": "http://10.20.1.11:7034/olive/publisher/getAccountDetails?AccountId=",
+    "accByPhone": "http://10.20.1.11:7034/olive/publisher/viewAcntsByPhone?phoneNumber=",
+    "accountbalance": "http://10.20.1.11:7034/Intellect/idc/v2/accountledger/accountbalance?userId=IDCADMIN&accountNumber=",
+    "miniStatement": "http://10.20.1.11:7034/olive/publisher/getAccountLastNTxns",
+    "fundTransfer": "http://10.20.1.11:7034/olive/publisher/fundtransfer",
+    "tokenURL": "http://10.20.1.11:7023/ARXSSO/oauth/token",
+    "setMPin": "http://10.20.1.11:7023/ARXAL/rest/ArmorSOAServices/setMPin",
+    "resetMPin": "http://10.20.1.11:7023/ARXAL/rest/ArmorSOAServices/forgotMPin",
+    "verifyMPin": "http://10.20.1.11:7023/ARXAL/rest/ArmorSOAServices/verifyMPin",
+    "changeMPin": "http://10.20.1.11:7023/ARXAL/rest/ArmorSOAServices/changeMPin",
+    "GetCustomerId": "http://10.20.1.11:7034/olive/publisher/GetCustomerIdforUSSD",
+    "addUser": "http://10.20.1.11:7023/ARXAL/rest/ArmorSOAServices/AddUser",
+    "teleBirr": "http://10.20.1.11:7034/olive/publisher/BanktoWallet",
+    "teleBirrEnquiry": "http://10.20.1.11:7034/olive/publisher/QueryCustomerBriefInfo",
+    "UtilityPay": "http://10.20.1.11:7034/olive/publisher/UtilityPay",
+    "nonCardEnquiry": "http://10.20.1.11:7034/olive/publisher/nonCardEnquiry",
+    "nonCardTransfer": "http://10.20.1.11:7034/olive/publisher/nonCardTransfer",
+    "checkPNR": "http://10.1.10.15/guzogoUSSD/checkPNR",
+    "payGuzo": "http://10.1.10.15/guzogoUSSD/pay",
+    "verifyPaymentGuzo": "http://10.1.10.15/guzogoUSSD/verifyPayment",
+    "schoolDetail": "http://10.20.1.16:7084/api/school-detail",
+    "schoolBranchDetail": "http://10.20.1.16:7084/api/branch-detail",
+    "schoolPaymentDetail": "http://10.20.1.16:7084/api/payment-detail",
+    "schoolPaymentTransfer": " http://10.20.1.16:7084/api/payment-transfer",
+    "uniCashAuth": "http://196.189.52.41:18888/uniCashHibret/rest/auth",
+    "searchEnterpriseByCode": "http://196.189.52.41:18888/uniCashHibret/rest/enterprise/findByEnterpriseCode",
+    "searchEnterpriseByName": "http://196.189.52.41:18888/uniCashHibret/rest/enterprise/findByEnterpriseName",
+    "searchStudent": "http://196.189.52.41:18888/uniCashHibret/rest/student/searchStudent",
+    "settleBill": "http://196.189.52.41:18888/uniCashHibret/rest/bill/settleBill",
+    "searchBill": "http://196.189.52.41:18888/uniCashHibret/rest/bill/search",
+    "allowedMobile": [
+      "0913712347",
+      "0911004451",
+      "0911160344",
+      "0911482287",
+      "0933555647",
+      "0912215528"
+    ]
+  },
+  "token": {
+    "grantType": "password",
+    "clientSecret": "asdfSFS34wfsdfsdfSDSD32dfsddDDerQSNCK34SOWEK5354fdgdf4",
+    "clientId": "131804060198305",
+    "username": "SYSADMIN2",
+    "password": "SYSADMIN2",
+    "scope": "openid offline_access"
+  },
+  "userData": {
+    "usrTicket": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJTWVNBRE1JTjIiLCJmbmFtZSI6IlVTRVIiLCJ1c2Vyc3RhdHVzIjoiMyIsImVudGl0eWxpc3QiOlsiQmFuayJdLCJyb2xlcyI6WyJBUk1BRE1HUk9VUCIsIkFSTVNZU0FETUdST1VQIiwiQVJNUkVQT1JUU0FETUlOIl0sImlzcyI6IkFSWCIsImF1ZCI6ImRlZmF1bHQiLCJsbmFtZSI6IkFETUlOIiwic2NvcGUiOiJvcGVuaWQgb2ZmbGluZV9hY2Nlc3MiLCJ1c2VyVHlwZSI6IjEiLCJleHAiOjE2Njc4MzEzNDcsInNlc3Npb25fc3RhdGUiOjQyNjg5LCJpYXQiOjE2Njc4Mjk1NDcsImp0aSI6IjJhNmMyMjcxLTlkMDMtNDVkMC1iZmU3LWM3M2Q2Njc1MjNjYyIsImVudGl0eSI6IkJhbmsifQ.mGaDwdR39czHAEwNxKXHLSQrDKhp2ttN4Bpja7EmV4v_QKf3BNd_NVx7twj56m4GVOn88IDQrppT16OyPrmqJ1XFTTN5v32VGuOWciCvp3EDJzDeOkkN9cFEpqXrlX4PnVR65OC4HILfGoDmOFJHGq1Ju0ZysFUYfPSU_waAnucodKfZNLJozfceGjidFb-YHFF5GMbjfFOUs-5vDdCWwO1nTp18iY-tag8s_TMX9CMEl2BPIFjM2gOtZmsPShuzlgUfm0KTET8MaJG7x77G3AfO-RR6O3_om-pmqnPidERnDAEWlVUCj916BzwjXmb2SoYthevHxsiw_LEUrzWeQw",
+    "deviceType": "ussd",
+    "deviceOS": "IOS",
+    "userId": "SYSADMIN2",
+    "host": "10.20.0.21",
+    "salt": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA32rpoAO6Obi/4kydkyqHTd5Co5vfXatm/hTBlUVy66hlHpINiyHWcQUlRpPka0YLB4oEReccCzfJT37+CJ6riJ48wefEslNf2wNFuuBMbykSk4dp6XF+RvbL2Lo6aGhr+ZvSKRDx63OgCp2tarFbbo6WEXQx1HTGTl0A3i8mX02VlHpZMK9m3xSg5XYnEpRUMuGUHJQuhafrRAybPkoAQBrH88Y27os2F+M1cp8OYWUeEo+SRlkVSaWPgauZ6IXwmX5lL6J2dQHQZowHqy6IiYk0bCXsHHCcYBLHeW25wlCqKvstUN/Fud1B/IYBp845rh8bGOZEz4oXjpCm1S09oQIDAQAB"
+  }
+}
